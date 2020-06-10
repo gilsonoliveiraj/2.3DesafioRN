@@ -31,22 +31,68 @@ const CartProvider: React.FC = ({ children }) => {
   useEffect(() => {
     async function loadProducts(): Promise<void> {
       // TODO LOAD ITEMS FROM ASYNC STORAGE
+      const jsonValue = await AsyncStorage.getItem('@GoMarketPlace:products');
+      jsonValue && setProducts(JSON.parse(jsonValue));
     }
 
     loadProducts();
   }, []);
 
-  const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
-  }, []);
+  const saveProducts = useCallback(async () => {
+    await AsyncStorage.setItem(
+      '@GoMarketPlace:products',
+      JSON.stringify(products),
+    );
+  }, [products]);
 
-  const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+  const addToCart = useCallback(
+    async product => {
+      // TODO ADD A NEW ITEM TO THE CART
+      const index = products.findIndex(x => x.id === product.id);
 
-  const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      if (index === -1) {
+        setProducts([...products, { ...product, quantity: 1 }]);
+      } else {
+        const newArray = [...products];
+        newArray[index].quantity += 1;
+        setProducts(newArray);
+      }
+      saveProducts();
+    },
+    [products, saveProducts],
+  );
+
+  const increment = useCallback(
+    async id => {
+      // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
+      const index = products.findIndex(x => x.id === id);
+      const newItem = products[index];
+
+      newItem.quantity += 1;
+      const newArr = [...products];
+      newArr.splice(index, 1, newItem);
+      setProducts(newArr);
+      saveProducts();
+    },
+    [products, saveProducts],
+  );
+
+  const decrement = useCallback(
+    async id => {
+      // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART      const index = products.findIndex(x => x.id === id);
+      const index = products.findIndex(x => x.id === id);
+      const newItem = products[index];
+
+      newItem.quantity -= 1;
+      const newArr = [...products];
+      newItem.quantity === 0
+        ? newArr.splice(index, 1)
+        : newArr.splice(index, 1, newItem);
+      setProducts(newArr);
+      saveProducts();
+    },
+    [products, saveProducts],
+  );
 
   const value = React.useMemo(
     () => ({ addToCart, increment, decrement, products }),
